@@ -12,7 +12,7 @@ import java.net.URI;
 
 /**
  * Created by benwilcock on 22/11/2016.
- * This service class handles the communication with the `covers-service` application.
+ * This service class handles the communication with the `dest-service` application.
  * This callout features a [Circuit Breaker] and requires the [Registry] to contain
  * an entry for the dependent `covers-service`.
  *
@@ -37,10 +37,10 @@ public class CoverServiceImpl implements CoverService {
     @Value("${cover.client.random-faults:false}")
     private boolean randomFaults;
 
-    @Value("${cover.client.coverServiceLogicalName:COVER-SERVICE}")
+    @Value("${cover.client.coverServiceLogicalName:DEST-SERVICE}")
     private String coverServiceLogicalName; // The name registered in the Eureka [Registry]
 
-    @Value("${cover.client.coverTypesEndpoint:covers}")
+    @Value("${cover.client.coverTypesEndpoint:destinations}")
     private String coverTypesEndpoint;
 
     public CoverServiceImpl(RestTemplate restTemplate) {
@@ -70,9 +70,9 @@ public class CoverServiceImpl implements CoverService {
         try {
             /** Use a logical name (from the config) to identify the target microservice **/
             URI uri = URI.create(SERVICE_PREFIX + coverServiceLogicalName + ENDPOINT_PREFIX + coverTypesEndpoint);
-            LOG.debug("Calling the 'covers-service' ({}) to get all the latest types of cover....", uri.toString());
+            LOG.debug("Calling the 'dest-service' ({}) to get all the latest destinations....", uri.toString());
             String covers = this.restTemplate.getForObject(uri, String.class);
-            LOG.debug("The latest types of cover include: {}", covers);
+            LOG.debug("The latest types of destinations include: {}", covers);
             return covers;
         } catch (Throwable e){
             LOG.warn("There was an unexpected problem: {} '{}'", e.getClass().toString(), e.getMessage());
@@ -86,7 +86,7 @@ public class CoverServiceImpl implements CoverService {
      * @return
      */
     public String getCoversFallbackMethod() {
-        LOG.warn("Using the fallback method as there was an issue getting the cover types.");
+        LOG.warn("Using the fallback method as there was an issue getting the destinations.");
         return fallbackCoverTypes;
     }
 

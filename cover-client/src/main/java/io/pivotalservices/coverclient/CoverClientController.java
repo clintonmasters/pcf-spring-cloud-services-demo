@@ -18,20 +18,20 @@ public class CoverClientController {
     private CoverService coverService;
 
     /**
-     * This method offers an endpoint called '/mycovers' that will accept an empty GET
+     * This method offers an endpoint called '/destinations' that will accept an empty GET
      * request. It then uses the `covers-service` to get the latest types of cover available
-     * before returining this list to the user.
+     * before returning this list to the user.
      *
      * If the covers service is unavailable, a [Circuit Breaker] kicks in which returns a single
      * choice of `No Cover`.
      *
      * @return String Types of cover available.
      */
-    @GetMapping("/mycovers")
+    @GetMapping("/mydestinations")
     public String myCovers() {
-        LOG.info("Asking for all known cover types...");
+        LOG.info("Asking for all known destinations...");
         String covers = coverService.getCovers();
-        LOG.info("Found the following cover types: {}", covers);
+        LOG.info("Found the following destinations: {}", covers);
         return covers;
     }
 }

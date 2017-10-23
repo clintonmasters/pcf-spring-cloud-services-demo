@@ -24,7 +24,7 @@ public class CoverServiceController {
     @Value("${cover.service.random-delay:false}")
     private boolean addRandomDelay;
 
-    @GetMapping(value = "/covers")
+    @GetMapping(value = "/destinations")
     public String getCovers(){
         LOG.debug("Getting all known cover types...");
 
@@ -39,7 +39,7 @@ public class CoverServiceController {
             }
         }
 
-        LOG.debug("Returning the cover types: {}", covers);
+        LOG.debug("Returning destinations: {}", covers);
         return covers;
     }
 }

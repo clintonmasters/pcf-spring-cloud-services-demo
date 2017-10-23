@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.web.client.RestTemplate;
 
 /**
- * This method offers an endpoint called '/mycovers' that will accept an empty GET
+ * This method offers an endpoint called '/mydestinations' that will accept an empty GET
  * request. It then uses the `covers-service` to get the latest types of cover available
  * before returining this list to the user.
  *

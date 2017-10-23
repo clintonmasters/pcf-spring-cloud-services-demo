@@ -1,13 +1,13 @@
 ---
 applications:
-  - name: cover-service
+  - name: dest-service
     path: ./cover-service/build/libs/cover-service.jar
     memory: 1024M
     services:
       - registry
       - config
       - rabbit
-  - name: cover-client
+  - name: dest-client
     path: ./cover-client/build/libs/cover-client.jar
     memory: 1024M
     services:
@@ -15,9 +15,9 @@ applications:
       - config
       - breaker
       - rabbit
-  - name: cover-zipkin
-    memory: 1024M
-    path: ./zipkin-server/build/libs/zipkin-server.jar
-    services:
-      - rabbit
-      - registry
+ #  - name: dest-zipkin
+    #memory: 1024M
+    #path: ./zipkin-server/build/libs/zipkin-server.jar
+    #services:
+    #- rabbit
+    #- registry
