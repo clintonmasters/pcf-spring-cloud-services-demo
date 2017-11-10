@@ -1,0 +1,214 @@
+= Exploring Cloud Foundy 
+Clint Masters
+v1.0 2017-11-09
+:toc:
+:toc-placement!:
+
+Exploring Cloud Foundry with a modified version of 
+https://github.com/benwilcock/pcf-spring-cloud-services-demo[Ben Wilcock's Spring Cloud Services demo].
+
+
+toc::[]
+
+== Getting Ready
+
+=== Install Software
+
+Install https://network.pivotal.io/products/pcfdev/[PCF Dev].
+
+Install _CF CLI_. `brew install cf`
+
+Install _Virutal Box_. `brew cask install virtualbox`
+
+
+=== Prepare the VM
+
+Use `-s scs` to enable _Spring Cloud Services_.  Use `-m 10240` to increase the vm memory from 8GB to 10GB.  Use `-k` to import the certificate.
+
+[source,bash]
+----
+$ cf dev start -s scs -m 10240 -k
+
+$ cf login -a https://api.local.pcfdev.io --skip-ssl-validation
+API endpoint: https://api.local.pcfdev.io
+
+Email> user
+
+Password> pass
+----
+
+== Demo 1: Org, Spaces, and Services
+
+We'll setup an org called CLM since our application is a _Customer Loyalty Marketing_ application and create a development space.
+
+[source,bash]
+----
+$ cf create-org CLM
+$ cf create-space dev -o CLM
+$ cf target -o CLM -s dev
+----
+
+Log into Apps Manager and see what services are availible.
+
+Apps Manager URL: https://apps.local.pcfdev.io
+Email: admin / Password: admin
+
+Could also use
+[source,bash]
+----
+$ cf marketplace
+----
+
+For a fuller list, create a free account on https://login.run.pivotal.io/login[Pivotal Web Services].
+
+These software services are called tiles.
+
+
+=== Add Services
+
+Cloud Foundry frees developers and operators from day-to-day tasks managing the infrastructure so they can concentrate on applications and data.  _Cloud Ready_ 
+applications are state-less, so we'll use a Cloud Foundry service to store data.
+
+[source,bash]
+----
+$ ./setup_services
+----
+
+Using a 10GB virutal machine is close to the limit on my computer so the script has pauses.  
+
+
+[source,bash]
+----
+$ cf services
+Getting services in org pcfdev-org / space pcfdev-space as user...
+OK
+
+name       service                       plan       bound apps   last operation
+rabbit     p-rabbitmq                    standard                create succeeded
+breaker    p-circuit-breaker-dashboard   standard                create succeeded
+registry   p-service-registry            standard                create succeeded
+config     p-config-server               standard                create succeeded
+----
+
+== Demo 2 Amazing _cf push_
+
+[source,bash]
+----
+$ jenv local 1.8
+$ ./gradlew clean assemble
+$ cf push
+----
+
+
+show manifest then
+
+
+Show the services again to see the application bound to the services
+
+[source,bash]
+----
+$ cf services
+Getting services in org pcfdev-org / space pcfdev-space as user...
+OK
+
+name       service                       plan       bound apps                                  last operation
+rabbit     p-rabbitmq                    standard   cover-service, cover-client, cover-zipkin   create succeeded
+breaker    p-circuit-breaker-dashboard   standard   cover-client                                create succeeded
+registry   p-service-registry            standard   cover-service, cover-client, cover-zipkin   create succeeded
+config     p-config-server               standard   cover-service, cover-client                 create succeeded
+----
+
+
+
+Show the App in Action in web browser
+
+http://cover-client.local.pcfdev.io/mycovers
+
+
+Refresh config
+
+curl -X POST -d "" cover-service.local.pcfdev.io/refresh
+or load script
+
+
+http://dest-client.local.pcfdev.io/mydestinations
+http://dest-service.local.pcfdev.io/destinations
+
+== How is this working?
+
+[source,bash]
+----
+$ cat manifest.yml
+$ cf env dest-client
+----
+
+Show
+
+== Kill one of the servers
+
+== Show circuit breaker
+
+== Scale up to 2
+
+== Kill one of the servers
+
+
+
+== Appendix
+
+== to fix cert issues
+cf dev trust
+
+Later, cf dev destroy
+
+Add a docker registry from our localhost
+[source,bash]
+----
+cf dev start -r host.pcfdev.io:5000
+cf dev target
+cf push -o host.pcfdev.io:5000/repository/image
+----
+
+
+
+== Compare to Docker
+
+We can push a simple docker application.  Let use 
+https://github.com/glestaris/cf-docker-app[dock-app] from George Lestaris.  
+
+[source,bash]
+----
+$ docker login --username clintonmasters --password xxxx
+
+$ docker-machine start
+
+$ eval $(docker-machine env default)
+
+$ docker build -t clintonmasters/cf-docker-app:latest .
+
+$ docker push clintonmasters/cf-docker-app:latest 
+
+$ docker-machine stop
+
+$ cf login -a 
+
+$ cf push cf-docker-app -o clintonmasters/cf-docker-app
+
+$ cf apps
+
+$ curl http://cf-docker-app.local.pcfdev.io
+
+$ cf scale cf-docker-app -i 2
+
+$ curl http://cf-docker-app.local.pcfdev.io
+
+$ cf logs
+
+$ cf ssh
+----
+
+
+PCF and Docker both use _runC_.  Cloud Foundry is the second largest user of _runC_ Same `cf push` command.  Added benefit of loging and scaling.
+
+A video comparision: https://www.youtube.com/watch?v=1AwN9Nqc688[Docker & Buildpacks: One App, Two Options for Deploying to Cloud Foundry].
+
