@@ -37,20 +37,47 @@ Email> user
 Password> pass
 ----
 
+Only have to specify the parameters the first time when `cf dev start` creates the VM.   `cf dev suspend` and `cf dev resume` can be used to suspend/resume the virtual machine from now on.
+
+
 == Demo 1: Org, Spaces, and Services
 
-We'll setup an org called CLM since our application is a _Customer Loyalty Marketing_ application and create a development space.
+=== Orgs & Spaces
+
+We'll setup an org called CLM since our application is a _Customer Loyalty Marketing_ application.  Quotas are applied to an org.  We'll create a development space in that org.  
 
 [source,bash]
 ----
 $ cf create-org CLM
 $ cf create-space dev -o CLM
-$ cf target -o CLM -s dev
+$ cf target -o CLM -s dev 
 ----
 
-Log into Apps Manager and see what services are availible.
+Orgs and Spaces are tools are administrative tools to make the interactions between people easier.  The applications are deployed to domains.  Our demo is using a single domain _apps.local.pcfdev.io_.
 
-Apps Manager URL: https://apps.local.pcfdev.io
+
+=== Services
+
+Cloud Foundry frees developers and operators from day-to-day tasks so they can concentrate on applications and data.  _Cloud Ready_ applications are state-less, so we'll use a Cloud Foundry service to store data.  Four ways to store state.
+
+1. User-provided Service.  Similar to what we do today with an external database or SaaS.  The improvement is Cloud Foundry provides a place to store the credentials.  Developer enters crendentials, port number. etc. Only works in my space.
+
+2. Brokered Service.  Tile in Marketplace.  Service is external to PCF
+Managed Service.  This what we saw with the Google Cloud Services tile.
+
+3. Managed Service. Service is Deployed on PCF. Single Instance
+
+4. On-Demand Service. Developer can create own instance.
+
+=== Marketplace
+
+The easiest way to install a service is to use the marketplace.
+
+https://pivotal.io/platform/pcf-marketplace[Pivotal Network Marketplace]
+
+Can download a release, load it in Cloud Froundry and it will be availible in your Marketplace.  I can't run any of these on my latop.  Lets login in our marketplace and see what availible.
+
+https://apps.local.pcfdev.io[Apps Manager]
 Email: admin / Password: admin
 
 Could also use
@@ -59,15 +86,10 @@ Could also use
 $ cf marketplace
 ----
 
-For a fuller list, create a free account on https://login.run.pivotal.io/login[Pivotal Web Services].
-
-These software services are called tiles.
-
-
 === Add Services
 
-Cloud Foundry frees developers and operators from day-to-day tasks managing the infrastructure so they can concentrate on applications and data.  _Cloud Ready_ 
-applications are state-less, so we'll use a Cloud Foundry service to store data.
+Our simple destination application uses _Service Registry_ so the client and server can discover each other. _Rabbit_ provides a quere for tracing information which we are not examining today.  _Circuit Breaker_ which we'll see in a minute. And finally _Config Server_ to hold the application config.
+
 
 [source,bash]
 ----
@@ -90,7 +112,19 @@ registry   p-service-registry            standard                create succeede
 config     p-config-server               standard                create succeeded
 ----
 
+Four services are created.  We'll see what this bound apps column means in a moment.
+
+
+
+
 == Demo 2 Amazing _cf push_
+
+show manifest
+
+[source,bash]
+----
+$ cat manifest.yml
+----
 
 [source,bash]
 ----
@@ -99,11 +133,129 @@ $ ./gradlew clean assemble
 $ cf push
 ----
 
+=== CF Push Details
 
-show manifest then
+[source,bash]
+----
+Using manifest file /Users/masterc/cf/pcf-spring-cloud-services-demo/manifest.yml
+
+Updating app dest-service in org CLM / space dev as admin...
+OK
+
+Uploading dest-service...
+Uploading app files from: <1>
+/var/folders/pk/f8htp5pj0j53klnwd8z2l7g80000gr/T/unzipped-app262956707
+Uploading 1.2M, 138 files
+Done uploading               
+OK <2>
+Binding service registry to app dest-service in org CLM / space dev as admin...
+OK
+Binding service config to app dest-service in org CLM / space dev as admin...
+OK
+Binding service rabbit to app dest-service in org CLM / space dev as admin...
+OK
+
+Stopping app dest-service in org CLM / space dev as admin...
+OK
+
+Starting app dest-service in org CLM / space dev as admin... 
+Downloading dotnet-core_buildpack...
+Downloading ruby_buildpack...
+Downloading php_buildpack...
+Downloading staticfile_buildpack...
+Downloading binary_buildpack...
+Downloaded dotnet-core_buildpack
+Downloading nodejs_buildpack...
+Downloaded php_buildpack
+Downloading go_buildpack...
+Downloaded binary_buildpack
+Downloading java_buildpack...
+Downloaded staticfile_buildpack
+Downloaded ruby_buildpack
+Downloading python_buildpack...
+Downloaded nodejs_buildpack
+Downloaded go_buildpack
+Downloaded java_buildpack
+Downloaded python_buildpack
+Creating container <3>
+Successfully created container
+Downloading app package...
+Downloaded app package (42.8M)
+Downloading build artifacts cache...
+Downloaded build artifacts cache (109B)
+Staging...
+-----> Java Buildpack Version: v3.13 (offline) | https://github.com/cloudfoundry/java-buildpack.git#03b493f
+-----> Downloading Open Jdk JRE 1.8.0_121 from https://java-buildpack.cloudfoundry.org/openjdk/trusty/x86_64/openjdk-1.8.0_121.tar.gz (found in cache)
+       Expanding Open Jdk JRE to .java-buildpack/open_jdk_jre (1.1s)
+-----> Downloading Open JDK Like Memory Calculator 2.0.2_RELEASE from https://java-buildpack.cloudfoundry.org/memory-calculator/trusty/x86_64/memory-calculator-2.0.2_RELEASE.tar.gz (found in cache)
+       Memory Settings: -Xss349K -Xmx681574K -XX:MaxMetaspaceSize=104857K -Xms681574K -XX:MetaspaceSize=104857K
+-----> Downloading Container Certificate Trust Store 2.0.0_RELEASE from https://java-buildpack.cloudfoundry.org/container-certificate-trust-store/container-certificate-trust-store-2.0.0_RELEASE.jar (found in cache)
+       Adding certificates to .java-buildpack/container_certificate_trust_store/truststore.jks (0.3s)
+-----> Downloading Spring Auto Reconfiguration 1.10.0_RELEASE from https://java-buildpack.cloudfoundry.org/auto-reconfiguration/auto-reconfiguration-1.10.0_RELEASE.jar (found in cache)
+Exit status 0
+Staging complete
+Uploading droplet, build artifacts cache... <4>
+Uploading build artifacts cache...
+Uploading droplet...
+Uploaded build artifacts cache (109B)
+Uploaded droplet (88.2M)
+Uploading complete
+Destroying container
+Successfully destroyed container
+
+OK
+
+0 of 1 instances running, 1 starting
+1 of 1 instances running
+
+App started
+
+App dest-service was started using this command `CALCULATED_MEMORY=$($PWD/.java-buildpack/open_jdk_jre/bin/java-buildpack-memory-calculator-2.0.2_RELEASE -memorySizes=metaspace:64m..,stack:228k.. -memoryWeights=heap:65,metaspace:10,native:15,stack:10 -memoryInitials=heap:100%,metaspace:100% -stackThreads=300 -totMemory=$MEMORY_LIMIT) && JAVA_OPTS="-Djava.io.tmpdir=$TMPDIR -XX:OnOutOfMemoryError=$PWD/.java-buildpack/open_jdk_jre/bin/killjava.sh $CALCULATED_MEMORY -Djavax.net.ssl.trustStore=$PWD/.java-buildpack/container_certificate_trust_store/truststore.jks -Djavax.net.ssl.trustStorePassword=java-buildpack-trust-store-password" && SERVER_PORT=$PORT eval exec $PWD/.java-buildpack/open_jdk_jre/bin/java $JAVA_OPTS -cp $PWD/. org.springframework.boot.loader.JarLauncher`
+
+Showing health and status for app dest-service in org CLM / space dev as admin...
+OK
+
+requested state: started
+instances: 1/1
+usage: 1G x 1 instances
+urls: dest-service.local.pcfdev.io
+last uploaded: Mon Oct 23 18:27:11 UTC 2017
+stack: cflinuxfs2 <6>
+buildpack: container-certificate-trust-store=2.0.0_RELEASE java-buildpack=v3.13-offline-https://github.com/cloudfoundry/java-buildpack.git#03b493f java-main open-jdk-like-jre=1.8.0_121 open-jdk-like-memory-calculator=2.0.2_RELEASE spring-auto-reconfiguration=1.10...
+----
+<1> Upload code to cloud controller. Create application record to keep track of name, org, space, number of instances.
+
+<2> Bind Services.  Create accounts & URL's.
+
+<3> Always start from a clean environment, so we lets have a task to new container and compile the code.  Run an auction--"which VM can do this". Create a contrainer.  Run detect script from each buildpack.  If we detect buildpack applies to this code,run buildpack(s) to compile.  You can see Java buildpack was used.  
+
+Compile.
+Add (JDK, Tomcat, SpringBoot).  You can the Buildpack detected Spring and configured the JavaBean to use the bound services.
+
+<4> Release.  Create Droplet. Put the droplet in the blob store.
+
+<5>  Auction for who is going to run the application.  Start the application.  Create Route (DNS entry, load balance).
+
+<6> This it the stack.  If there is a security update, bosh will get a new version of the stack and we can `cf restage`.  
+https://github.com/cloudfoundry/cflinuxfs2/blob/master/cflinuxfs2/cflinuxfs2_receipt[What's in the stack?]
 
 
-Show the services again to see the application bound to the services
+=== Application in Action
+
+Show the App in Action in web browser
+
+http://dest-client.local.pcfdev.io/mydestinations
+
+Look in App Manager
+https://uaa.local.pcfdev.io/login
+
+
+== How is this working?
+
+=== Services
+
+
+Show the services again to see the application bound to the services.
 
 [source,bash]
 ----
@@ -118,23 +270,7 @@ registry   p-service-registry            standard   cover-service, cover-client,
 config     p-config-server               standard   cover-service, cover-client                 create succeeded
 ----
 
-
-
-Show the App in Action in web browser
-
-http://cover-client.local.pcfdev.io/mycovers
-
-
-Refresh config
-
-curl -X POST -d "" cover-service.local.pcfdev.io/refresh
-or load script
-
-
-http://dest-client.local.pcfdev.io/mydestinations
-http://dest-service.local.pcfdev.io/destinations
-
-== How is this working?
+Show the environment.
 
 [source,bash]
 ----
@@ -142,21 +278,62 @@ $ cat manifest.yml
 $ cf env dest-client
 ----
 
-Show
+Show environment.
 
-== Kill one of the servers
+== Safety
 
-== Show circuit breaker
+=== Stop Server
 
-== Scale up to 2
+[source,bash]
+----
+$ ./test-client.sh
+$ cf ssh dest-server
+$ ps -ef
+$ kill X
+----
 
-== Kill one of the servers
+=== Show Circuit breaker
+
+What is going on?  I have seen this before.  You're in the Netflix app and you don't see your queue.  You have a list of movies and you can watch them, but it's not your list--it's generic list.
+
+
+In the services section, show the circuit breaker.
+
+
+[source,bash]
+----
+$ cf ssh dest-server
+$ ps -ef
+$ kill X
+----
+
+Cloud Foundry is recovering and restarting the VM.
+
+== Scale 
+
+[source,bash]
+----
+$ cf scale dest-client -i 2
+----
+
+Could also scale with the GUI.
+
+=== Kill one of the servers
+[source,bash]
+----
+$ cf ssh dest-service -i 1
+$ ps -ef
+$ kill X
+----
+
+
+== BOSH
 
 
 
 == Appendix
 
-== to fix cert issues
+=== to fix cert issues
 cf dev trust
 
 Later, cf dev destroy
@@ -164,14 +341,14 @@ Later, cf dev destroy
 Add a docker registry from our localhost
 [source,bash]
 ----
-cf dev start -r host.pcfdev.io:5000
-cf dev target
-cf push -o host.pcfdev.io:5000/repository/image
+$ cf dev start -r host.pcfdev.io:5000
+$ cf dev target
+$ cf push -o host.pcfdev.io:5000/repository/image
 ----
 
 
 
-== Compare to Docker
+=== Docker Example
 
 We can push a simple docker application.  Let use 
 https://github.com/glestaris/cf-docker-app[dock-app] from George Lestaris.  
@@ -212,3 +389,14 @@ PCF and Docker both use _runC_.  Cloud Foundry is the second largest user of _ru
 
 A video comparision: https://www.youtube.com/watch?v=1AwN9Nqc688[Docker & Buildpacks: One App, Two Options for Deploying to Cloud Foundry].
 
+=== Circuit Breaker Configuration
+
+You can configure _dest-client_ to not randomly trip the Circuit Breaker.  If the _app-config_ directory edit _cover_clint.yml_.  Set _random-faults_ to _false_ and reload the configuration.
+
+[source,bash]
+----
+$ git add cover-client.yml 
+$ git commit -m "client: not random faults"
+$ git push
+$ curl -X POST -d "" http://dest-client.local.pcfdev.io/refresh 
+----
